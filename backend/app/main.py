@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .api import dashboard, items, llm_keys, meta, oauth_outlook, runs, senders
+from .api import dashboard, items, llm_keys, meta, oauth_outlook, runs, senders, status
 from .config import get_settings
 from .crypto import validate_secret_key
 from .db import ensure_indexes
@@ -46,8 +46,16 @@ async def config_error_handler(_: Request, exc: ConfigError):
     return JSONResponse({"detail": str(exc), "code": "config_error"}, status_code=500)
 
 
-for r in (meta.router, senders.router, llm_keys.router, oauth_outlook.router, runs.router, items.router,
-          dashboard.router):
+for r in (
+    meta.router,
+    senders.router,
+    llm_keys.router,
+    oauth_outlook.router,
+    runs.router,
+    items.router,
+    dashboard.router,
+    status.router,
+):
     app.include_router(r)
 
 _docs = get_settings().docs_dir

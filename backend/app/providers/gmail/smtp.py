@@ -66,8 +66,9 @@ class GmailProvider:
         s = get_settings()
         sec = s.gmail_smtp_security
         if sec == "ssl":
-            smtp = smtplib.SMTP_SSL(s.gmail_smtp_host, s.gmail_smtp_port, timeout=30,
-                                    context=ssl.create_default_context())
+            smtp = smtplib.SMTP_SSL(
+                s.gmail_smtp_host, s.gmail_smtp_port, timeout=30, context=ssl.create_default_context()
+            )
         else:
             smtp = smtplib.SMTP(s.gmail_smtp_host, s.gmail_smtp_port, timeout=30)
         smtp.ehlo()
@@ -88,14 +89,14 @@ class GmailProvider:
             phase = "auth"
             self._login(smtp, sender)
             return CheckResult(True, "Login OK")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             r = map_smtp_error(e, phase)
             return CheckResult(False, r.detail, auth_failed=(r.outcome == "auth"))
         finally:
             if smtp is not None:
                 try:
                     smtp.quit()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     print()
 
     def send(self, sender: dict, email: OutgoingEmail) -> SendResult:
@@ -119,8 +120,9 @@ class GmailProvider:
             if code >= 400:
                 raise smtplib.SMTPResponseException(code, resp)
             return SendResult("sent", f"{code} {_text(resp)}", message_id=message_id)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             from ...errors import AppError
+
             if isinstance(e, AppError):
                 return SendResult("permanent", e.detail, recipient_specific=True)
             return map_smtp_error(e, phase)
@@ -128,8 +130,8 @@ class GmailProvider:
             if smtp is not None:
                 try:
                     smtp.quit()
-                except Exception:  # noqa: BLE001
+                except Exception:
                     try:
                         smtp.close()
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         print()

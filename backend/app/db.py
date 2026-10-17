@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timezone
+from datetime import UTC
 
 from pymongo import ASCENDING, MongoClient
 from pymongo.database import Database
@@ -21,7 +21,7 @@ def get_db() -> Database:
     global _client, _db
     if _db is None:
         s = get_settings()
-        _client = MongoClient(s.mongo_url, tz_aware=True, tzinfo=timezone.utc, serverSelectionTimeoutMS=10000)
+        _client = MongoClient(s.mongo_url, tz_aware=True, tzinfo=UTC, serverSelectionTimeoutMS=10000)
         _db = _client.get_default_database(default="applymail")
     return _db
 
@@ -34,7 +34,9 @@ def set_db(db) -> None:
 
 def ensure_indexes(db: Database | None = None) -> None:
     db = db if db is not None else get_db()
-    db.senders.create_index([("user_id", ASCENDING), ("provider", ASCENDING), ("address", ASCENDING)], unique=True)
+    db.senders.create_index(
+        [("user_id", ASCENDING), ("provider", ASCENDING), ("address", ASCENDING)], unique=True
+    )
     db.send_log.create_index([("sender_id", ASCENDING), ("at", ASCENDING)])
     db.send_log.create_index("at", expireAfterSeconds=3 * 24 * 3600)
     db.llm_keys.create_index([("user_id", ASCENDING)])

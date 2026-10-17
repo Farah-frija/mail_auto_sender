@@ -4,10 +4,21 @@ import json
 import logging
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-_REDACT_KEYS = {"secret", "secret_enc", "app_password", "password", "api_key", "token", "access_token",
-                "refresh_token", "body", "authorization", "contentbytes"}
+_REDACT_KEYS = {
+    "secret",
+    "secret_enc",
+    "app_password",
+    "password",
+    "api_key",
+    "token",
+    "access_token",
+    "refresh_token",
+    "body",
+    "authorization",
+    "contentbytes",
+}
 _PATTERNS = [
     re.compile(r"(?i)(app[_ ]?password|api[_ ]?key|secret|token|password)(\s*[=:]\s*)\S+"),
     re.compile(r"AIza[0-9A-Za-z_\-]{20,}"),
@@ -37,7 +48,7 @@ def redact(value):
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         data = {
-            "ts": datetime.fromtimestamp(record.created, timezone.utc).isoformat(),
+            "ts": datetime.fromtimestamp(record.created, UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "msg": redact_text(record.getMessage()),
@@ -59,6 +70,9 @@ def setup_logging(level: str = "INFO") -> None:
     root = logging.getLogger()
     root.handlers[:] = [h]
     root.setLevel(level)
+    # The MongoDB driver logs whole command documents at DEBUG (encrypted secrets, email bodies):
+    # keep it at INFO whatever the root level is.
+    logging.getLogger("pymongo").setLevel(logging.INFO)
 
 
 def get_logger(name: str) -> logging.Logger:
